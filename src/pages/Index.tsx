@@ -1,12 +1,125 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useCallback, useEffect } from "react";
+import Topbar from "@/components/Topbar";
+import HomeScreen from "@/components/HomeScreen";
+import GameScreen from "@/components/GameScreen";
+import PremiumModal from "@/components/PremiumModal";
+import { useGameLimit } from "@/hooks/useGameLimit";
+import { CASES_DATABASE, type MedicalBlock, type CaseItem } from "@/data/cases";
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = "https://xtxixbsdubmzrkkpcnyn.supabase.co";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0eGl4YnNkdWJtenJra3BjbnluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5OTQ4MDgsImV4cCI6MjA4ODU3MDgwOH0.gPD-vGzhf0j2YDZ9vnVyyNk8ypGnsTQmsK-To3-gEnU";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const Index = () => {
+  const [user, setUser] = useState<{ email?: string; name?: string } | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
+  const [selectedBlock, setSelectedBlock] = useState<MedicalBlock | null>(null);
+  const [currentCase, setCurrentCase] = useState<CaseItem | null>(null);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+
+  const { played, maxPlays, canPlay, incrementPlayed } = useGameLimit(isPremium);
+
+  // Auth listener
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        setUser({ email: session.user.email, name: session.user.user_metadata?.full_name });
+        // Check premium status
+        try {
+          const { data } = await supabase
+            .from("profiles")
+            .select("is_premium")
+            .eq("id", session.user.id)
+            .single();
+          setIsPremium(data?.is_premium === true);
+        } catch {
+          setIsPremium(false);
+        }
+      } else {
+        setUser(null);
+        setIsPremium(false);
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({ email: session.user.email, name: session.user.user_metadata?.full_name });
+        supabase
+          .from("profiles")
+          .select("is_premium")
+          .eq("id", session.user.id)
+          .single()
+          .then(({ data }) => {
+            setIsPremium(data?.is_premium === true);
+          });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogin = useCallback(async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
+    });
+  }, []);
+
+  const handleLogout = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setIsPremium(false);
+  }, []);
+
+  const handleSelectBlock = useCallback(
+    (block: MedicalBlock) => {
+      if (!canPlay) {
+        setShowPremiumModal(true);
+        return;
+      }
+      const cases = CASES_DATABASE[block.id];
+      if (!cases || cases.length === 0) {
+        alert("Belum ada kasus untuk blok ini.");
+        return;
+      }
+      const randomCase = cases[Math.floor(Math.random() * cases.length)];
+      setSelectedBlock(block);
+      setCurrentCase(randomCase);
+      // Only reduce quota after case loaded successfully
+      incrementPlayed();
+    },
+    [canPlay, incrementPlayed]
+  );
+
+  const handleBackToMenu = useCallback(() => {
+    setSelectedBlock(null);
+    setCurrentCase(null);
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Topbar
+        played={played}
+        maxPlays={maxPlays}
+        isPremium={isPremium}
+        user={user}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
+      />
+
+      {selectedBlock && currentCase ? (
+        <GameScreen blockName={selectedBlock.name} caseData={currentCase} onBack={handleBackToMenu} />
+      ) : (
+        <HomeScreen onSelectBlock={handleSelectBlock} />
+      )}
+
+      <PremiumModal
+        isOpen={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        isLoggedIn={!!user}
+        onLogin={handleLogin}
+      />
     </div>
   );
 };
