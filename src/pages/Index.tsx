@@ -6,7 +6,7 @@ import PremiumModal from "@/components/PremiumModal";
 import { useGameLimit } from "@/hooks/useGameLimit";
 import { CASES_DATABASE, type MedicalBlock, type CaseItem } from "@/data/cases";
 import { supabase } from "@/integrations/supabase/client";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 
 const Index = () => {
   const [user, setUser] = useState<{ email?: string; name?: string } | null>(null);
