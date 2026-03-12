@@ -5,11 +5,8 @@ import GameScreen from "@/components/GameScreen";
 import PremiumModal from "@/components/PremiumModal";
 import { useGameLimit } from "@/hooks/useGameLimit";
 import { CASES_DATABASE, type MedicalBlock, type CaseItem } from "@/data/cases";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
-const supabaseUrl = "https://xtxixbsdubmzrkkpcnyn.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0eGl4YnNkdWJtenJra3BjbnluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5OTQ4MDgsImV4cCI6MjA4ODU3MDgwOH0.gPD-vGzhf0j2YDZ9vnVyyNk8ypGnsTQmsK-To3-gEnU";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const Index = () => {
   const [user, setUser] = useState<{ email?: string; name?: string } | null>(null);
