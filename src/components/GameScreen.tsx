@@ -154,12 +154,20 @@ const GameScreen = ({ blockName, caseData, onBack, onNext }: GameScreenProps) =>
             <p className="text-sm leading-relaxed text-foreground">{caseData.explanation}</p>
           </div>
 
-          <button
-            onClick={onBack}
-            className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-          >
-            Kembali ke Menu
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={onBack}
+              className="flex-1 rounded-xl border border-border bg-secondary py-3 text-sm font-semibold text-foreground transition-opacity hover:opacity-90"
+            >
+              Kembali ke Menu
+            </button>
+            <button
+              onClick={onNext}
+              className="flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Soal Berikutnya →
+            </button>
+          </div>
         </div>
       )}
     </div>
