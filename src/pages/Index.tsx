@@ -6,6 +6,7 @@ import PremiumModal from "@/components/PremiumModal";
 import { useGameLimit } from "@/hooks/useGameLimit";
 import { CASES_DATABASE, type MedicalBlock, type CaseItem } from "@/data/cases";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 
 
 const Index = () => {
