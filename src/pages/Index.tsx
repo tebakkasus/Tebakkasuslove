@@ -83,11 +83,23 @@ const Index = () => {
       const randomCase = cases[Math.floor(Math.random() * cases.length)];
       setSelectedBlock(block);
       setCurrentCase(randomCase);
-      // Only reduce quota after case loaded successfully
       incrementPlayed();
     },
     [canPlay, incrementPlayed]
   );
+
+  const handleNextCase = useCallback(() => {
+    if (!selectedBlock) return;
+    if (!canPlay) {
+      setShowPremiumModal(true);
+      return;
+    }
+    const cases = CASES_DATABASE[selectedBlock.id];
+    if (!cases || cases.length === 0) return;
+    const randomCase = cases[Math.floor(Math.random() * cases.length)];
+    setCurrentCase(randomCase);
+    incrementPlayed();
+  }, [selectedBlock, canPlay, incrementPlayed]);
 
   const handleBackToMenu = useCallback(() => {
     setSelectedBlock(null);
