@@ -118,7 +118,7 @@ const Index = () => {
       />
 
       {selectedBlock && currentCase ? (
-        <GameScreen blockName={selectedBlock.name} caseData={currentCase} onBack={handleBackToMenu} />
+        <GameScreen key={currentCase.vignette} blockName={selectedBlock.name} caseData={currentCase} onBack={handleBackToMenu} onNext={handleNextCase} />
       ) : (
         <HomeScreen onSelectBlock={handleSelectBlock} />
       )}
