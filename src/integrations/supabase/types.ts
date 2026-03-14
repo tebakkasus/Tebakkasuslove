@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      cases: {
+        Row: {
+          answer_index: number
+          block_id: string
+          created_at: string
+          explanation: string
+          hints: Json
+          id: string
+          options: Json
+          vignette: string
+        }
+        Insert: {
+          answer_index: number
+          block_id: string
+          created_at?: string
+          explanation: string
+          hints?: Json
+          id?: string
+          options?: Json
+          vignette: string
+        }
+        Update: {
+          answer_index?: number
+          block_id?: string
+          created_at?: string
+          explanation?: string
+          hints?: Json
+          id?: string
+          options?: Json
+          vignette?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
