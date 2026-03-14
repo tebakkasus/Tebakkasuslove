@@ -4,9 +4,10 @@ import HomeScreen from "@/components/HomeScreen";
 import GameScreen from "@/components/GameScreen";
 import PremiumModal from "@/components/PremiumModal";
 import { useGameLimit } from "@/hooks/useGameLimit";
-import { CASES_DATABASE, type MedicalBlock, type CaseItem } from "@/data/cases";
+import { type MedicalBlock, type CaseItem } from "@/data/cases";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { toast } from "@/hooks/use-toast";
 
 
 const Index = () => {
@@ -15,6 +16,7 @@ const Index = () => {
   const [selectedBlock, setSelectedBlock] = useState<MedicalBlock | null>(null);
   const [currentCase, setCurrentCase] = useState<CaseItem | null>(null);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const { played, maxPlays, canPlay, incrementPlayed } = useGameLimit(isPremium);
 
@@ -23,7 +25,6 @@ const Index = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         setUser({ email: session.user.email, name: session.user.user_metadata?.full_name });
-        // Check premium status
         try {
           const { data } = await supabase
             .from("profiles")
@@ -69,37 +70,67 @@ const Index = () => {
     setIsPremium(false);
   }, []);
 
+  const fetchRandomCase = useCallback(async (blockId: string): Promise<CaseItem | null> => {
+    // Get count first, then pick random offset
+    const { count } = await supabase
+      .from("cases")
+      .select("*", { count: "exact", head: true })
+      .eq("block_id", blockId);
+
+    if (!count || count === 0) return null;
+
+    const randomOffset = Math.floor(Math.random() * count);
+    const { data, error } = await supabase
+      .from("cases")
+      .select("*")
+      .eq("block_id", blockId)
+      .range(randomOffset, randomOffset)
+      .single();
+
+    if (error || !data) return null;
+
+    return {
+      vignette: data.vignette,
+      hints: data.hints as string[],
+      options: data.options as string[],
+      answerIndex: data.answer_index,
+      explanation: data.explanation,
+    };
+  }, []);
+
   const handleSelectBlock = useCallback(
-    (block: MedicalBlock) => {
+    async (block: MedicalBlock) => {
       if (!canPlay) {
         setShowPremiumModal(true);
         return;
       }
-      const cases = CASES_DATABASE[block.id];
-      if (!cases || cases.length === 0) {
-        alert("Belum ada kasus untuk blok ini.");
+      setLoading(true);
+      const randomCase = await fetchRandomCase(block.id);
+      setLoading(false);
+      if (!randomCase) {
+        toast({ title: "Belum ada kasus untuk blok ini.", variant: "destructive" });
         return;
       }
-      const randomCase = cases[Math.floor(Math.random() * cases.length)];
       setSelectedBlock(block);
       setCurrentCase(randomCase);
       incrementPlayed();
     },
-    [canPlay, incrementPlayed]
+    [canPlay, incrementPlayed, fetchRandomCase]
   );
 
-  const handleNextCase = useCallback(() => {
+  const handleNextCase = useCallback(async () => {
     if (!selectedBlock) return;
     if (!canPlay) {
       setShowPremiumModal(true);
       return;
     }
-    const cases = CASES_DATABASE[selectedBlock.id];
-    if (!cases || cases.length === 0) return;
-    const randomCase = cases[Math.floor(Math.random() * cases.length)];
+    setLoading(true);
+    const randomCase = await fetchRandomCase(selectedBlock.id);
+    setLoading(false);
+    if (!randomCase) return;
     setCurrentCase(randomCase);
     incrementPlayed();
-  }, [selectedBlock, canPlay, incrementPlayed]);
+  }, [selectedBlock, canPlay, incrementPlayed, fetchRandomCase]);
 
   const handleBackToMenu = useCallback(() => {
     setSelectedBlock(null);
