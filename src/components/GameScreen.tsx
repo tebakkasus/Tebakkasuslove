@@ -11,7 +11,7 @@ interface GameScreenProps {
 
 const MAX_ATTEMPTS = 5;
 
-const GameScreen = ({ blockName, caseData, onBack }: GameScreenProps) => {
+const GameScreen = ({ blockName, caseData, onBack, onNext }: GameScreenProps) => {
   const [attempts, setAttempts] = useState(0);
   const [revealedHints, setRevealedHints] = useState(1);
   const [disabledOptions, setDisabledOptions] = useState<Set<number>>(new Set());
