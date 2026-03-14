@@ -6,6 +6,7 @@ interface GameScreenProps {
   blockName: string;
   caseData: CaseItem;
   onBack: () => void;
+  onNext: () => void;
 }
 
 const MAX_ATTEMPTS = 5;
